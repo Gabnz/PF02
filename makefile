@@ -1,10 +1,13 @@
 all: main
 
-main: EntradaSalida.o
-	g++ EntradaSalida.o -o main
+main: main.o Simulacion.o
+	g++ main.o Simulacion.o -o main
 
-EntradaSalida.o: EntradaSalida.cpp
-	g++ -c EntradaSalida.cpp
+main.o: main.cpp
+	g++ -c main.cpp
+
+Simulacion.o: Simulacion.cpp Simulacion.h
+	g++ -c Simulacion.cpp
 
 clean:
-	rm -rf *o main
+	rm -rf *.o main

@@ -32,7 +32,8 @@
  * Multiples servidores prestan servicio en paralelo.
  * 
 */
- 
+
+#include "Simulacion.h"
 #include<iostream> //Libreria standard.
 #include<fstream>  //Libreria de manejo de archivos.
 
@@ -54,15 +55,26 @@ int main(){
 		  tsimulacion; //Tiempo de simulacion.
 	myfile = fopen("modelo.in","r"); //Apertura del archivo de entrada con permisos de lectura solamente.
 	
+	Simulacion s; //Variable de clase Simulacion con la cual se va a interactuar en las simulaciones.
+	
+	
 	fscanf(myfile, "%d", &n); //Lectura de la cantidad n de modelos a tratar.
 	cout << "La cantidad de simulaciones a realizar son: " << n << endl; //Prueba.
 	for(int i = 0; i < n; i++){ //Se lee cada uno de los modelos a tratar.
 		fscanf(myfile, "%f %f %d %d %d", &a, &b, &replicas, &ttransicion, &tsimulacion); //Lectura de datos de entrada.
-		cout << "Parametro a: " << a << endl; //Prueba.
-		cout << "Parametro b: " << b << endl; //Prueba.
-		cout << "Numero de replicas: " << replicas << endl; //Prueba.
-		cout << "Tiempo de transicion: " << ttransicion << endl; //Prueba.
-		cout << "Tiempo de simulacion: " << tsimulacion << endl; //Prueba.
+		
+		/**Carga de cada simulacion en la variable s*/
+		s.setA(a);
+		s.setB(b);
+		s.setReplicas(replicas);
+		s.setTtransicion(ttransicion);
+		s.setTsimulacion(tsimulacion);
+		
+		cout << "Parametro a: " << s.getA() << endl; //Prueba.
+		cout << "Parametro b: " << s.getB() << endl; //Prueba.
+		cout << "Numero de replicas: " << s.getReplicas() << endl; //Prueba.
+		cout << "Tiempo de transicion: " << s.getTtransicion() << endl; //Prueba.
+		cout << "Tiempo de simulacion: " << s.getTsimulacion() << endl; //Prueba.
 		cout << "Presione enter para continuar..." << endl; //Prueba.
 		getchar(); //Prueba.
 	}
