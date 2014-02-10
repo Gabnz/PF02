@@ -54,6 +54,24 @@ class Simulacion{
 	/** Prototipos de las implementaciones en Simulacion.cpp */
 	
 	bool protoPrueba();
+	
+	int factorial(int n);/**funcion factorial*/
+	
+	/**Medidas de desempeno teoricas*/
+	float P0(int s, int n, float ro);
+	
+	float Pn(int s, int n, float ro);
+	
+	float L(int s, float ro);/**cantidad esperada de clientes en el sistema*/
+	
+	float Lq(int s, float ro);/**cantidad esperada de clientes en la cola*/
+	
+	float W(int s, float ro, int lambda, int mu);/**tiempo esperado de permanencia en el sistema*/
+	
+	float Wq(int s, float ro, int lambda);/**tiempo esperado de permanencia en la cola*/
+	
+	/**Medidas de desempeno con simulacion*/
+	
 };
 
 #endif
