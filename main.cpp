@@ -5,7 +5,7 @@
  * Ada Parra       19842103
  * Eliecer Uribe   20181085
  * Gabriel Nuñez   19843489
- * Roynny Zambrano 22210143
+ * Roynny Zambrano 22210443
  * Tulio M. Loreto 20261035
  * 
 	Se desea simular el siguiente sistema:
