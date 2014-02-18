@@ -26,7 +26,7 @@ float Simulacion::Pn(int s, int n, float ro){
 	float result;
 	
 	if(n >= 0){
-		if(n <= s){
+		if(n < s){
 			result =  (pow(ro, n)/factorial(n));
 		}else{
 			result = (pow(ro, n)/(factorial(s)*pow(s, n - s)));
