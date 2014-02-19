@@ -1,6 +1,6 @@
 #include "Simulacion.h"
 #include<cmath>
-
+#include<cstdio>
 /** Implementacion de los metodos definidos en Simualcion.h*/
 
 bool Simulacion::protoPrueba(){ return true; }
@@ -60,5 +60,6 @@ float Simulacion::W(int s, float ro, int lambda, int mu){
 	
 	return Wq(s, ro, lambda) + 1/mu;
 }
+
 
 

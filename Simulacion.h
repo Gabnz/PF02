@@ -10,7 +10,7 @@ class Simulacion{
 	
 	/**Atributos*/
 	private:
-		float a, /**Parametro que representa el tiempo entre llegadas 'a' de personas.*/
+		float a, /**Parametro que representa la media de llegadas 'a' de personas.*/
 		b; /**Parametro que representa el promedio 'b' de servicio por persona.*/
 		int	replicas, /**Cantidad de replicas.*/
 		ttransicion, /**Tiempo de transicion.*/
@@ -69,6 +69,10 @@ class Simulacion{
 	float W(int s, float ro, int lambda, int mu);/**tiempo esperado de permanencia en el sistema*/
 	
 	float Wq(int s, float ro, int lambda);/**tiempo esperado de permanencia en la cola*/
+	
+	float S(){ return (getA()/getB());} //Servidores ocupados (S con raya arriba)... Esto se calcula con s=lambda/miu = media efectiva de llegada (lambda) / media de servicio (miu) = a/b... Ademas, esto es equivalente a ro (pag 16, tema teoria de colas (ro=lambda/miu))...
+	
+	float PorcentajeUtilizacion(){ return (S()/4)*100;} //Porcentaje de utilizacion del sistema... = servidores ocupados/cantidad de servidores x 100...	
 	
 	/**Medidas de desempeno con simulacion*/
 	
