@@ -61,5 +61,14 @@ float Simulacion::W(int s, float ro, int lambda, int mu){
 	return Wq(s, ro, lambda) + 1/mu;
 }
 
+float Simulacion::lambdaSombrero(int s, int n, int ro, int lambda){
+		float result = 0;
+		
+		for(int i = 0; i <= n; i++){
+			result += Pn(s,n,ro); //La formula es: Sumatoria de n=0 hasta n de lambdan por Pn.
+		}
+	
+		return result * lambda; //Usamos el mismo lambda.
+}
 
 

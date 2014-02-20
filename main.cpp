@@ -95,6 +95,6 @@ void generarModeloTeorico(int numeroModelo, Simulacion s, FILE *myfile){
 	fprintf(myfile,"Modelo %d: \n", numeroModelo);
 	fprintf(myfile,"                 Utilizacion          L          Lq          W          Wq\n");
 	fprintf(myfile,"Simulacion       xx.xx                xx.xx      xx.xx      xx.xx       xx.xx\n");
-	fprintf(myfile,"Teorico          %.5f             %.5f    %.5f    %.5f     %.5f\n\n",s.PorcentajeUtilizacion(),s.L(4,s.S()),s.Lq(4,s.S()),s.W(4,s.S(),s.getA(),s.getB()),s.Wq(4,s.S(),s.getA()));
+	fprintf(myfile,"Teorico          %.5f             %.5f    %.5f    %.5f     %.5f\n\n",s.PorcentajeUtilizacion(4,4,s.ro(),s.getA()),s.L(4,s.ro()),s.Lq(4,s.ro()),s.W(4,s.ro(),s.getA(),s.getB()),s.Wq(4,s.ro(),s.getA()));
 	
 }
