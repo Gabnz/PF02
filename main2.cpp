@@ -47,26 +47,23 @@ using std::cout; //Para salidas.
 using std::endl; //Para saltos de linea.
 using std::list; //Para la lista.
 
-// Se define estructura evento
-struct evento {
-	int tipo; // 0 = llegada, 1 = salida
-	float tiempo;
-	int id_cliente;
-};
 
 void generarModeloTeorico(int numeroModelo, Simulacion s, FILE *myfile); //Modelo teorico completo...
-void inicializacion(float &reloj, list<evento> &lista_eventos, evento &e, int &cliente_actual);
-void llegada(int &clientes_en_sistema, bool &taquilla_ocupada, int &cliente_actual, list<int> &cola, list<evento> &lista_eventos, float reloj, float num_u[]);
-void salida(int &clientes_en_sistema, bool &taquilla_ocupada, list<int> &cola, list<evento> &lista_eventos, float reloj, float num_u[]);
 int numerosEnteros(int mod_m);
 float numerosUniformes(int num_e, int mod_m);
+float observacionAleatoria(float r, float media);
+void simulacion(Simulacion s);
 
 //Funcion principal del proyecto.
 int main(){
 	
+	// variables de prueba para imprimir..test
+	float auxf=0;
 	int aux=0;
+
+
 	const int mod_m=1000;
-	/*FILE *myFile; //Variable para la apertura del archivo de entrada modelo.in.
+	FILE *myFile; //Variable para la apertura del archivo de entrada modelo.in.
 	FILE *myOtherFile; //Variable para la creacion del archivo de salida performance.out.
 	int n; //Cantidad de modelos a tratar.
 	float a, //Parametro que representa la media de llegadas 'a' de personas.
@@ -83,9 +80,9 @@ int main(){
 	cout << "La cantidad de simulaciones a realizar son: " << n << endl; //Prueba.
 	for(int i = 0; i < n; i++){ //Se lee cada uno de los modelos a tratar.
 		fscanf(myFile, "%f %f %d %d %d", &a, &b, &replicas, &ttransicion, &tsimulacion); //Lectura de datos de entrada.
-	*/	
+		
 		/**Carga de cada simulacion en la variable s*/
-	/*	s.setA(a);
+		s.setA(a);
 		s.setB(b);
 		s.setReplicas(replicas);
 		s.setTtransicion(ttransicion);
@@ -106,28 +103,16 @@ int main(){
 	
 	fclose(myFile); //Cierre del archivo de entrada modelo.in.
 	fclose(myOtherFile); //Cierre del archivo de salida performance.out.
-	*/
-	
-	int num_e[30];
-	float num_u[30];
-	
-	//Variables simulación
-	float reloj = 0;
-	evento e;
-	evento prox_e;
-	list<evento> lista_eventos;
-	float tiempo;
-	
-	list<int> cola;
-	//bool taquilla_ocupada[4];
-	bool taquilla_ocupada = false;
-	int clientes_en_sistema = 0;
-	int cliente_actual = 0;
-	
+
+	/** Impresiones de prueba */	
 	//aux = numerosEnteros(mod_m);		
 	//cout << "variable aux:" << aux << endl; 
 	//cout << "variable uniforme:" << numerosUniformes(aux, mod_m) << endl;
 
+	//auxf = observacionAleatoria(0.2204 , 2);
+	//cout << "variable auxf:" << auxf << endl; 
+
+	simulacion(s);
 	return 0;							//Se le dice al sistema que todo salio bien.
 }
 
@@ -140,7 +125,6 @@ void generarModeloTeorico(int numeroModelo, Simulacion s, FILE *myfile){
 	
 }
 
-
 int numerosEnteros(int mod_m){
 	int hora = time(NULL);			//Inicializa variable hora con la del sistema
 	srand(hora);						//Usa la hora del sistema como semilla
@@ -149,3 +133,27 @@ int numerosEnteros(int mod_m){
 }
 
 float numerosUniformes(int num_e, int mod_m) { return ((num_e + 0.5) / mod_m); }
+
+float observacionAleatoria(float r, float media){ return ((- 1 / media) * log(1-r)); }
+
+void simulacion(Simulacion s){
+
+	int replicas = s.getReplicas();
+
+	for (int i = 0; i < replicas; ++i){
+		//cout << "paso una replica" << endl;
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
