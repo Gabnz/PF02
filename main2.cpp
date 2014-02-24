@@ -183,7 +183,7 @@ int numerosEnteros(int mod_m){
 	int hora = 0;
 	hora = time(NULL);			//Inicializa variable hora con la del sistema
 	srand(hora);						//Usa la hora del sistema como semilla
-	return (1 + rand() % (mod_m -1) );
+	return (rand() % (mod_m) );
 }
 
 
