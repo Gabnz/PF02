@@ -57,11 +57,10 @@ struct tabla {
 };
 
 void generarModeloTeorico(int numeroModelo, Simulacion s, FILE *myfile); //Modelo teorico completo...
-void generarTablaSimulacion(list<tabla> simu, FILE *myfiletabla);
 int numerosEnteros(int mod_m);
 float numerosUniformes(int num_e, int mod_m);
 float observacionAleatoria(float r, float media);
-void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m);
+void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfiletabla);
 
 //Funcion principal del proyecto.
 int main(){
@@ -73,9 +72,10 @@ int main(){
 	int aux=0;
 
 
-	//list<tabla> simu_tabla;
+	list<tabla> simu_tabla;
 
-	const int mod_m=1000;
+	const int mod_m = 1000;
+	const int MAX = 1000000;
 	FILE *myFile; //Variable para la apertura del archivo de entrada modelo.in.
 	FILE *myOtherFile; //Variable para la creacion del archivo de salida performance.out.
 	FILE *myFiletabla;
@@ -115,32 +115,11 @@ int main(){
 		getchar(); //Prueba.
 	}
 
-
-	cout << " llego aqui"<< endl;
 	fclose(myFile); //Cierre del archivo de entrada modelo.in.
 	fclose(myOtherFile); //Cierre del archivo de salida performance.out.	
+	
+	simulacion(s,simu_tabla,mod_m,myFiletabla);
 	fclose(myFiletabla);
-
-
-	cout << " llego aqui"<< endl;
-	///** Impresiones de prueba */	
-	aux = numerosEnteros(mod_m);
-	cout << "numero entero en el main: " << aux << endl;
-	aux = 0;	
-	aux = numerosEnteros(mod_m);
-	cout << "numero entero en el main: " << aux << endl;
-	aux = numerosEnteros(mod_m);
-	cout << "numero entero en el main: " << aux << endl;		
-	//cout << "variable aux:" << aux << endl; 
-	//cout << "variable uniforme:" << numerosUniformes(aux, mod_m) << endl;
-
-	//auxf = observacionAleatoria(0.2204 , 2);
-	//cout << "variable auxf:" << auxf << endl; 
-
-	cout << "antes de entrar a simulacion " << endl;
-	//simulacion(s,simu_tabla,mod_m);
-	cout << "salio de la simulaion" << endl;
-	//generarTablaSimulacion(simu_tabla,myFile2);
 
 	return 0;							//Se le dice al sistema que todo salio bien.
 }
@@ -154,102 +133,108 @@ void generarModeloTeorico(int numeroModelo, Simulacion s, FILE *myfile){
 	
 }
 
-void generarTablaSimulacion(list<tabla> simu, FILE *myfiletabla){
-
-	tabla simu_aux;
-	//list<tabla>::iterator it;
-	//it = simu.begin();
-
-	printf("entro al generarTablaSimulacion \n ");
-	fprintf(myfiletabla,"| tiempo t | N(t) | Rllegada | sig_tiempo_llegada | rservicio1 |");
-	fprintf(myfiletabla,"| sig_tiempo_salida1 | sig_llegada ");
-	fprintf(myfiletabla,"| sig_salida | sig_evento |");
-
-	/*
-	cout << "| tiempo t | N(t) | Rllegada | sig_tiempo_llegada | rservicio1 | rservicio2 | rservicio3 | rservicio4 |";
-	cout << "| sig_tiempo_salida1 | sig_tiempo_salida2 | sig_tiempo_salida3 | sig_tiempo_salida4 | sig_llegada ";
-	cout << "| sig_salida | sig_evento |" << endl;
-	*/
-	/*
-	while ( it != simu.end()){
-		simu_aux = simu.front();
-		cout << "|" << simu_aux.tiempo <<"|"<< simu_aux.nclientes <<"|"<< simu_aux.rllegada ;
-		cout <<"|"<< simu_aux.sig_tiempo_llegada <<"|"<< simu_aux.rservicio <<"|"<< simu_aux.sig_tiempo_salida ;
-		cout <<"|"<< simu_aux.sig_llegada <<"|"<< simu_aux.sig_salida <<"|"<< simu_aux.sig_evento << endl; 
-		it++;
-	}
-	*/
-}
-
-int numerosEnteros(int mod_m){	
-	return (rand() % mod_m );
-}
-
+int numerosEnteros(int mod_m){	return (rand() % mod_m ); }
 
 float numerosUniformes(int num_e, int mod_m) { return ((num_e + 0.5) / mod_m); }
 
 float observacionAleatoria(float r, float media){ return ((- 1 / media) * log(1-r)); }
 
-void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m){
+
+void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfiletabla){
 
 	tabla simu_aux;
 	simu_aux.tiempo = 0;
+	simu_aux.sig_llegada = 0;
+	simu_aux.sig_tiempo_llegada = 0;
 	simu_aux.sig_evento = 'L';
 	simu_aux.nclientes = 0;
 	simu_aux.s_ocupados = 0;
 
-	int auxi = 0;
- 	int j=0;
-	//cout << "simu_aux-sig_enveto" << simu_aux.sig_evento << endl;
-	//simu_tabla.push_front(simu_aux);
+	list<float>::iterator it;
+	int i, j=0, replicas = s.getReplicas();
 
-	//list<tabla>::iterator it;
-	//it = simu_tabla.begin();
-
-	int i, replicas = s.getReplicas();
-
-
-	cout << " dentro a la simulacion" << endl;
+	fprintf(myfiletabla,"| tiempo|N(t)|  rl  | sig_tl|  rs1 |  rs2 |  rs3 |  rs4 | s_ts1| s_ts2");
+	fprintf(myfiletabla,"| s_ts3| s_ts4| s_ll | s_sl | s_eve | \n");
 
 	for (i = 0; i < replicas; ++i){
-		//cout << "paso una replica" << endl;
 		
 		while(s.getTsimulacion() > simu_aux.tiempo) {
-			j++;
-			auxi = 0;
 
-			if (simu_aux.sig_evento = 'L'){ // si el evento es una llegada
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
+			/* 												COMIENZA entrada                                       */
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+				//cout << "simu_aux.sig_evento:" << simu_aux.sig_evento << endl;
+			if (simu_aux.sig_evento == 'L'){ // si el evento es una llegada
 				
-				cout << " Dentro del evento llegada L " << endl;
+					//cout << " Dentro del evento llegada L " << endl;
+					//cout << "simu_aux.tiempo:" << simu_aux.tiempo << endl;
+					//cout << "simu_aux.sig_llegada" << simu_aux.sig_llegada << endl;
 
-
-					auxi = numerosEnteros(mod_m);
-
-					cout << "numero entero generado: " << auxi << endl;
-					simu_aux.rllegada = numerosUniformes(auxi,mod_m);
+					simu_aux.tiempo = simu_aux.sig_llegada;
+					simu_aux.rllegada = numerosUniformes(numerosEnteros(mod_m),mod_m);
 					simu_aux.sig_tiempo_llegada = observacionAleatoria(simu_aux.rllegada,s.getA());
 					simu_aux.sig_llegada = simu_aux.sig_tiempo_llegada + simu_aux.tiempo;
 
 				if (simu_aux.nclientes >= 1){ // cuando existen clientes en el sistema
 
-					cout << " Cuando existen mas de 1 cliente en el sistema " << endl;
-
+					//cout << " Cuando existen mas de 1 cliente en el sistema " << endl;
 
 					if (simu_aux.s_ocupados < 4){ //si hay servidores libres
 
-							cout << " cuando hay servidores libres" <<endl;
-						simu_aux.rservicio.push_back(numerosUniformes(numerosEnteros(mod_m),mod_m));
-						simu_aux.sig_tiempo_salida.push_back(observacionAleatoria(simu_aux.rllegada,s.getB()));
+						//cout << " cuando hay servidores libres" <<endl;
+						simu_aux.rservicio.push_front(numerosUniformes(numerosEnteros(mod_m),mod_m));
+						simu_aux.sig_tiempo_salida.push_front(observacionAleatoria(simu_aux.rservicio.front(),s.getB()));
 					
+						simu_aux.rservicio.sort();
 						simu_aux.sig_tiempo_salida.sort();	//ordena los tiempos de salida
 						simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo; // le asigna el tiempo mas cercano
 						simu_aux.s_ocupados++;
 
 					}else{ //si no hay servidores libres
-						
-						cout << "cuando no hay servidores libres " << endl;
+						//cout << "cuando no hay servidores libres " << endl;
 						simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front();
 					}
+
+					// define cual es el proximo evento
+					if (simu_aux.sig_llegada < simu_aux.sig_salida){
+						simu_aux.sig_evento = 'L';
+						//simu_aux.tiempo = simu_aux.sig_tiempo_llegada;
+					}else{
+						simu_aux.sig_evento = 'S';
+						//simu_aux.tiempo = simu_aux.sig_tiempo_salida.front();
+					}	
+	
+
+				}else{ // si es el primer cliente del sistema
+
+					//cout << " si es el primer cliente " << endl;
+					simu_aux.sig_evento = 'L';
+					simu_aux.s_ocupados++;
+				}
+
+				simu_aux.nclientes = simu_aux.nclientes + 1;
+				
+				//cout << " Salio del evento llegada " << endl;
+
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
+			/* 												COMIENZA salida                                        */
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/				
+
+			}else{ // si el evento es una salida
+
+				simu_aux.tiempo = simu_aux.sig_salida;
+				simu_aux.nclientes = simu_aux.nclientes - 1;
+
+				if (simu_aux.nclientes >= 1){
+					
+					simu_aux.rservicio.push_front(numerosUniformes(numerosEnteros(mod_m),mod_m));
+					simu_aux.sig_tiempo_salida.push_front(observacionAleatoria(simu_aux.rservicio.front(),s.getB()));
+					
+					simu_aux.rservicio.sort();
+					simu_aux.sig_tiempo_salida.sort();	//ordena los tiempos de salida
+					simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo; // le asigna el tiempo mas cercano
+					simu_aux.s_ocupados++;
 
 					// define cual es el proximo evento
 					if (simu_aux.sig_llegada < simu_aux.sig_salida){
@@ -258,64 +243,54 @@ void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m){
 					}else{
 						simu_aux.sig_evento = 'S';
 						simu_aux.tiempo = simu_aux.sig_tiempo_salida.front();
-					}	
-	
-
-				}else{ // si es el primer cliente del sistema
-
-					cout << " si es el primer cliente " << endl;
-
-					simu_aux.sig_evento = 'L';
-					//simu_aux.rservicio.push_back(1000);
-					//simu_aux.sig_tiempo_salida.push_back(1000);
-					//simu_aux.sig_salida = -1;
-					simu_aux.s_ocupados++;
-				}
-
-				//simu_tabla.push_back(simu_aux);
-				simu_aux.nclientes = simu_aux.nclientes + 1;
-				//simu_aux.nclientes++;
-				
-
-				cout << " Salio del evento llegada " << endl;
-
-			}else{ // si el evento es una salida
-
-				simu_aux.rservicio.push_back(numerosUniformes(numerosEnteros(mod_m),mod_m));
-				simu_aux.sig_tiempo_salida.push_back(observacionAleatoria(simu_aux.rllegada,s.getB()));
-
-				simu_aux.sig_tiempo_salida.sort();	//ordena los tiempos de salida
-				simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo; // le asigna el tiempo mas cercano
-				simu_aux.s_ocupados++;
-
-				// define cual es el proximo evento
-				if (simu_aux.sig_llegada < simu_aux.sig_salida){
-					simu_aux.sig_evento = 'L';
-					simu_aux.tiempo = simu_aux.sig_tiempo_llegada;
+					}
 				}else{
-					simu_aux.sig_evento = 'S';
-					simu_aux.tiempo = simu_aux.sig_tiempo_salida.front();
+				cout << "el sistema se quedo sin clientes en la cola. break()" << endl; 
+				break;
+				} 
+				
+			}	
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
+			/* 												FIN DE LA ITERACION                                    */
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/			
+
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
+			/* 												IMPRESINO DE RESULTADOS                                */
+			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+			fprintf(myfiletabla, "| %.3f | %d  |%.3f |%.3f  ",simu_aux.tiempo,simu_aux.nclientes-1,simu_aux.rllegada,simu_aux.sig_tiempo_llegada );
+			
+			j=0;
+			for (it = simu_aux.rservicio.begin(); it != simu_aux.rservicio.end(); ++it) {
+    			fprintf(myfiletabla, "|%.3f ",*it);
+    			j++;
+    			//cout << "simu_aux.rservicio.front:" << *it << endl ;
+			}
+			while (j<4){
+				fprintf(myfiletabla,"| %c    ",'-');
+				j++;
+			}
+
+
+			j=0;	
+			for (it = simu_aux.sig_tiempo_salida.begin(); it != simu_aux.sig_tiempo_salida.end(); ++it) {
+    			fprintf(myfiletabla, "|%.3f ",*it);
+    			j++;
+    			//cout << "simu_aux.rservicio.front:" << *it << endl ;
+			}
+				while (j<4){
+					fprintf(myfiletabla, "| %c    ",'-');
+					j++;
 				}
 
-				//simu_tabla.push_back(simu_aux);
-				simu_aux.nclientes = simu_aux.nclientes - 1;
+			fprintf(myfiletabla, "| %.3f| %.3f|   %c   |\n",simu_aux.sig_llegada,simu_aux.sig_salida,simu_aux.sig_evento);
 
-			}	
-			// guarda la iteracion en la tabla de simulacion
 			simu_tabla.push_back(simu_aux);
-
-			cout << "| tiempo t | N(t) | Rllegada | sig_tiempo_llegada | rservicio1 |";
-			cout << "| sig_tiempo_salida1 | sig_llegada ";
-			cout << "| sig_salida | sig_evento |" << endl << endl << endl;			
-
-			cout << "|" << simu_aux.tiempo <<"|"<< simu_aux.nclientes -1 <<"|"<< simu_aux.rllegada ;
-			cout <<"|"<< simu_aux.sig_tiempo_llegada <<"|"<< simu_aux.rservicio.front() <<"|"<< simu_aux.sig_tiempo_salida.front() ;
-			cout <<"|"<< simu_aux.sig_llegada <<"|"<< simu_aux.sig_salida <<"|"<< simu_aux.sig_evento << endl; 
-
 			//cout << endl << endl << " llego al break " << endl;
-			//if (j==2) break;
+			//if (j==10) break;
 
 		}// fin del while de la simulacion
-	} // fin de la replica
-}
+	} // fin del for (replicas)
+}// fin simulacion
 
