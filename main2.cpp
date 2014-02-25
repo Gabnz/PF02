@@ -65,13 +65,15 @@ void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m);
 
 //Funcion principal del proyecto.
 int main(){
-	
+	//Se utiliza la hora del sistema como semilla...
+	srand(time(NULL)); //Inicializacion del tiempo para generar numeros aleatorios...
+					
 	// variables de prueba para imprimir..test
 	float auxf=0;
 	int aux=0;
 
 
-	list<tabla> simu_tabla;
+	//list<tabla> simu_tabla;
 
 	const int mod_m=1000;
 	FILE *myFile; //Variable para la apertura del archivo de entrada modelo.in.
@@ -84,7 +86,7 @@ int main(){
 		  ttransicion, //Tiempo de transicion.
 		  tsimulacion; //Tiempo de simulacion.
 	myFile = fopen("modelo.in","r"); //Apertura del archivo de entrada modelo.in con permisos de lectura solamente.
-	//myFiletabla = fopen("tabla.out","w");
+	myFiletabla = fopen("tabla.out","w");
 	myOtherFile = fopen("performance.out","w");	//Apertura del archivo de salida performance.out con permisos de escritura solamente.
 	Simulacion s; //Variable de clase Simulacion con la cual se va a interactuar en las simulaciones.
 	
@@ -117,11 +119,11 @@ int main(){
 	cout << " llego aqui"<< endl;
 	fclose(myFile); //Cierre del archivo de entrada modelo.in.
 	fclose(myOtherFile); //Cierre del archivo de salida performance.out.	
-	//fclose(myFiletabla);
+	fclose(myFiletabla);
 
 
 	cout << " llego aqui"<< endl;
-	/** Impresiones de prueba */	
+	///** Impresiones de prueba */	
 	aux = numerosEnteros(mod_m);
 	cout << "numero entero en el main: " << aux << endl;
 	aux = 0;	
@@ -179,11 +181,8 @@ void generarTablaSimulacion(list<tabla> simu, FILE *myfiletabla){
 	*/
 }
 
-int numerosEnteros(int mod_m){
-	int hora = 0;
-	hora = time(NULL);			//Inicializa variable hora con la del sistema
-	srand(hora);						//Usa la hora del sistema como semilla
-	return (rand() % (mod_m) );
+int numerosEnteros(int mod_m){	
+	return (rand() % mod_m );
 }
 
 
