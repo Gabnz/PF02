@@ -258,7 +258,10 @@ void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfilet
 			/* 												IMPRESINO DE RESULTADOS                                */
 			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-
+			
+			//cout << endl << endl << " llego al break " << endl;
+			//if (j==10) break;
+//fprintf(myfiletabla,"replica %d",i);
 			fprintf(myfiletabla, "| %.3f | %d  |%.3f |%.3f  ",simu_aux.tiempo,simu_aux.nclientes-1,simu_aux.rllegada,simu_aux.sig_tiempo_llegada );
 			
 			j=0;
@@ -271,7 +274,8 @@ void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfilet
 				fprintf(myfiletabla,"| %c    ",'-');
 				j++;
 			}
-
+			
+		//	fprintf(myfiletabla,"%d",j);
 
 			j=0;	
 			for (it = simu_aux.sig_tiempo_salida.begin(); it != simu_aux.sig_tiempo_salida.end(); ++it) {
@@ -287,10 +291,7 @@ void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfilet
 			fprintf(myfiletabla, "| %.3f| %.3f|   %c   |\n",simu_aux.sig_llegada,simu_aux.sig_salida,simu_aux.sig_evento);
 
 			simu_tabla.push_back(simu_aux);
-			//cout << endl << endl << " llego al break " << endl;
-			//if (j==10) break;
-
-		}// fin del while de la simulacion
+		}// fin del while de la simulacion		
 	} // fin del for (replicas)
 }// fin simulacion
 

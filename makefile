@@ -1,13 +1,13 @@
-all: main2
+all: main
 
-main2: main2.o Simulacion.o
-	g++ main2.o Simulacion.o -o main2
+main: main.o Simulacion.o
+	g++ main.o Simulacion.o -o main
 
-main2.o: main2.cpp
-	g++ -c main2.cpp
+main.o: main.cpp
+	g++ -c main.cpp
 
 Simulacion.o: Simulacion.cpp Simulacion.h
 	g++ -c Simulacion.cpp
 
 clean:
-	rm -rf *.o main2
+	rm -rf *.o main
