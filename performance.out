@@ -1,5 +1,10 @@
 Modelo 1: 
                  Utilizacion          L          Lq          W          Wq
-Simulacion       xx.xx                xx.xx      xx.xx      xx.xx       xx.xx
+Simulacion       0.00000             0.00000    0.00000    0.00000     0.00000
 Teorico          2.08025             1.16590    0.01205    0.00080     0.00080
+
+Modelo 2: 
+                 Utilizacion          L          Lq          W          Wq
+Simulacion       0.00000             0.00000    0.00000    0.00000     0.00000
+Teorico          14.28571             2.11429    0.11429    0.01143     0.01143
 

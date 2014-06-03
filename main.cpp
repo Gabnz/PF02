@@ -38,8 +38,11 @@
 #include<fstream>  //Libreria de manejo de archivos.
 #include<cstdlib>
 #include<list>	//Libreria de lista.
-#include<time.h> //Libreria para usar hora del sistema (semilla).
+#include<time.h> //Libreria para usar la hora del sistema (semilla).
 #include<math.h> //Para calcular ln(r).
+#include<string>
+
+const int MAX = 10000; 
 
 //Para no incluir todo el espacio de nombres (using namespace std;) se incluye solo lo que se utilizara... 
 using std::cin; //Para entradas.
@@ -48,19 +51,12 @@ using std::endl; //Para saltos de linea.
 using std::list; //Para la lista.
 
 
-// Se define estructura tabla de la simulacion.
-struct tabla {
- 	float tiempo, rllegada, sig_tiempo_llegada,  sig_llegada, sig_salida; 
-	int nclientes, s_ocupados;
-	list<float> rservicio, sig_tiempo_salida;
-	char sig_evento; // L: llegada y S: salida.
-};
-
-void impresionPerformance(int numeroModelo, Simulacion s, FILE *myfile); //Modelo teorico completo...
+//Metodos para la simulacion.
+void impresionPerformance(int numeroModelo, Simulacion s, FILE *myfile, float U, float L, float Lq, float W, float Wq); //Modelo teorico completo...
 int numerosEnteros(int mod_m);
 float numerosUniformes(int num_e, int mod_m);
 float observacionAleatoria(float r, float media);
-void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfiletabla);
+void simulacion(Simulacion s, float *U, float *L, float *Lq, float *W, float *Wq, int mod_m);
 
 //Funcion principal del proyecto.
 int main(){
@@ -72,10 +68,8 @@ int main(){
 	int aux=0;
 
 
-	list<tabla> simu_tabla;
-
 	const int mod_m = 1000;
-	const int MAX = 1000000;
+	
 	FILE *myFile; //Variable para la apertura del archivo de entrada modelo.in.
 	FILE *myOtherFile; //Variable para la creacion del archivo de salida performance.out.
 	FILE *myFiletabla;
@@ -85,11 +79,14 @@ int main(){
     int	  replicas, //Cantidad de replicas.
 		  ttransicion, //Tiempo de transicion.
 		  tsimulacion; //Tiempo de simulacion.
-	myFile = fopen("modelo.in","r"); //Apertura del archivo de entrada modelo.in con permisos de lectura solamente.
-	myFiletabla = fopen("tabla.out","w");
+	myFile = fopen("modelo.in","r"); //Apertura del archivo de entrada modelo.in con permisos de lectura solamente.	
 	myOtherFile = fopen("performance.out","w");	//Apertura del archivo de salida performance.out con permisos de escritura solamente.
-	Simulacion s; //Variable de clase Simulacion con la cual se va a interactuar en las simulaciones.
-	
+	Simulacion s; //Variable de clase Simulacion con la cual se va a interactuar en las simulaciones.	
+	float U=0,
+		  L=0,
+		  Lq=0,
+		  W=0,
+		  Wq=0; //Variables para el performance de la simulacion.
 	
 	fscanf(myFile, "%d", &n); //Lectura de la cantidad n de modelos a tratar.
 	cout << "La cantidad de simulaciones a realizar son: " << n << endl; //Prueba.
@@ -110,25 +107,25 @@ int main(){
 		cout << "Tiempo de simulacion: " << s.getTsimulacion() << endl; //Prueba.
 		cout << "Presione enter para continuar..." << endl; //Prueba.
 		
-		impresionPerformance(i+1,s,myOtherFile); //Llamada para generar archivo de salida performance.out.
+		simulacion(s,&U,&L,&Lq,&W,&Wq,mod_m); //Llamada al proceso de simulacion.
+		impresionPerformance(i+1,s,myOtherFile,U,L,Lq,W,Wq); //Llamada para generar archivo de salida performance.out.
 		
 		getchar(); //Prueba.
 	}
 
 	fclose(myFile); //Cierre del archivo de entrada modelo.in.
 	fclose(myOtherFile); //Cierre del archivo de salida performance.out.	
-	
-	simulacion(s,simu_tabla,mod_m,myFiletabla);
-	fclose(myFiletabla);
+		
 
 	return 0;							//Se le dice al sistema que todo salio bien.
 }
 
-void impresionPerformance(int numeroModelo, Simulacion s, FILE *myfile){	
+//Impresion del archivo performance.out. 
+void impresionPerformance(int numeroModelo, Simulacion s, FILE *myfile, float U, float L, float Lq, float W, float Wq){	
 			
 	fprintf(myfile,"Modelo %d: \n", numeroModelo);
 	fprintf(myfile,"                 Utilizacion          L          Lq          W          Wq\n");
-	fprintf(myfile,"Simulacion       xx.xx                xx.xx      xx.xx      xx.xx       xx.xx\n");
+	fprintf(myfile,"Simulacion       %.5f             %.5f    %.5f    %.5f     %.5f\n",U,L,Lq,W,Wq);
 	fprintf(myfile,"Teorico          %.5f             %.5f    %.5f    %.5f     %.5f\n\n",s.PorcentajeUtilizacion(4,4,s.ro(),s.getA()),s.L(4,s.ro()),s.Lq(4,s.ro()),s.W(4,s.ro(),s.getA(),s.getB()),s.Wq(4,s.ro(),s.getA()));
 	
 }
@@ -143,165 +140,211 @@ float numerosUniformes(int num_e, int mod_m) { return ((num_e + 0.5) / mod_m); }
 float observacionAleatoria(float r, float media){ return ((- 1 / media) * log(1-r)); }
 
 //Simulacion del sistema de colas para reunir observaciones estadisticas mediante el metodo de replicas.
-void simulacion(Simulacion s, list<tabla>  &simu_tabla, int mod_m, FILE *myfiletabla){
-
-	tabla simu_aux; //Tabla auxiliar.
+void simulacion(Simulacion s, float *U, float *L, float *Lq, float *W, float *Wq, int mod_m){
 	
-	//Inicializacion de la tabla.
-	simu_aux.tiempo = 0;
-	simu_aux.sig_llegada = 0;
-	simu_aux.sig_tiempo_llegada = 0;
-	simu_aux.sig_evento = 'L';
-	simu_aux.nclientes = 0;
-	simu_aux.s_ocupados = 0;
+	int i; // Contador para replicas.
+	float tiempo; //Tiempo T.
+	char sigEvento = 'L'; //Siguiente evento.	
+	float valorR1, valorR2, valorR3, valorR0;
+	float valorS1, valorS2, valorS3, valorS0;
+	float rLlegada,calculo; 
+	float u=0,l=0,lq=0,w=0,wq=0;
+	bool banderal=true,banderalq=true,banderaw=true,banderawq=true;
+	bool banderaTSalida;	
+	float sigTiempo, sigTLlegada, sigTSalida;
+	int cantidadClientes;
+	int servidoresOcupados;
+	list<float>::iterator it;
+	list<float> tiemposLlegada;
+	FILE *simulationFile;
+	simulationFile = fopen("simulacion.out","w");
+	for(i = 0; i < s.getReplicas(); i++){
+		sigTiempo = 0;
+		tiempo = 0;		
+		cantidadClientes = 0;
+		servidoresOcupados = 0;
 
-	list<float>::iterator it; //Iterator para recorrer las listas.
-	int i, j=0, replicas = s.getReplicas();
-
-	//Impresion de las cabeceras del modelo de salida.
-	fprintf(myfiletabla,"| tiempo|N(t)|  rl  | sig_tl|  rs1 |  rs2 |  rs3 |  rs4 | s_ts1| s_ts2");
-	fprintf(myfiletabla,"| s_ts3| s_ts4| s_ll | s_sl | s_eve | \n");
-
-	for (i = 0; i < replicas; i++){ //Ciclo de replicas a realizar.
 		
-		while(s.getTsimulacion() > simu_aux.tiempo) { //Mientras no haya transcurrido el tiempo de la simulacion.
-
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
-			/* 												COMIENZA entrada                                       */
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
-
-				//cout << "simu_aux.sig_evento:" << simu_aux.sig_evento << endl;//Prueba.
-			if (simu_aux.sig_evento == 'L'){ // Si el evento es una llegada.
+		float rServicio;
+		float aleatorio;
+		aleatorio = 0;
+		banderaTSalida = true;		
+		
+		
+		
+		valorR1 = 0;			
+		valorR2 = 0;
+		valorR3 = 0;
+		valorR0 = 0;
+		valorS1 = 0;
+		valorS2 = 0;
+		valorS3 = 0;
+		valorS0 = 0;
+		//getchar();
+		fprintf(simulationFile,"| tiempo|N(t)|  rl  | sig_tl|  rs1 |  rs2 |  rs3 |  rs4 | s_ts1| s_ts2");
+		fprintf(simulationFile,"| s_ts3| s_ts4| s_ll | s_sl | s_eve | \n");
+		while(s.getTsimulacion() > tiempo){		
+			
+				if(sigEvento == 'L'){ //Si es una llegada.
 				
-					//cout << " Dentro del evento llegada L " << endl;//Prueba.
+					//Calculo del tiempo t(n) y tiempo de la siguiente llegada.
+					if(sigTiempo > tiempo)
+						tiempo = sigTiempo;
+					rLlegada = numerosUniformes(numerosEnteros(mod_m),mod_m);
+					sigTLlegada = observacionAleatoria(rLlegada,s.getA());
+					sigTiempo = sigTiempo + sigTLlegada;
 					
-					//cout << "simu_aux.sig_llegada" << simu_aux.sig_llegada << endl;//Prueba.
-
-					simu_aux.tiempo = simu_aux.sig_llegada;
-					cout << "En llegada: simu_aux.tiempo:" << simu_aux.tiempo << endl;//Prueba.
-					simu_aux.rllegada = numerosUniformes(numerosEnteros(mod_m),mod_m);
-					simu_aux.sig_tiempo_llegada = observacionAleatoria(simu_aux.rllegada,s.getA());
-					simu_aux.sig_llegada = simu_aux.sig_tiempo_llegada + simu_aux.tiempo;
-
-				if (simu_aux.nclientes >= 1){ // Cuando existen clientes en el sistema.
-					cout << "Numero de clientes en el sistema: " << simu_aux.nclientes << endl;//Prueba.
-					getchar();//Prueba.
-					//cout << " Cuando existen mas de 1 cliente en el sistema " << endl;
-
-					if (simu_aux.s_ocupados < 4){ //Si hay servidores libres.
-
-						cout << "Servidores ocupados: " << simu_aux.s_ocupados <<endl;//Prueba.
-						simu_aux.rservicio.push_front(numerosUniformes(numerosEnteros(mod_m),mod_m));//Se generan los numeros enteros uniformes.
-						simu_aux.sig_tiempo_salida.push_front(observacionAleatoria(simu_aux.rservicio.front(),s.getB()));//Se realiza la observacion aleatoria mediante el metodo inverso.
 					
-						simu_aux.rservicio.sort(); //Ordena los rservicio.
-						simu_aux.sig_tiempo_salida.sort();	//Ordena los tiempos de salida.
-						simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo; //Le asigna el tiempo mas cercano.
-						simu_aux.s_ocupados++; //Aumenta la cantidad de servidores ocupados.
-
-					}else{ //Si no hay servidores libres.
-						cout << "Todos los servidores estan ocupados" << endl;//Prueba.
-						simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo;//Se asigna el siguiente tiempo de salida.
-					}
-
-					// Define cual es el proximo evento.
-					if (simu_aux.sig_llegada < simu_aux.sig_salida){ //Si el evento siguiente es una llegada:
-						simu_aux.sig_evento = 'L';
-						cout << "El siguiente envento es una llegada" << endl;//Prueba.
-						//simu_aux.tiempo = simu_aux.sig_tiempo_llegada;
-					}else{ //Si el evento siguiente es una salida.
-						simu_aux.sig_evento = 'S';
-						cout << "El siguiente evento es una salida" << endl;//Prueba.
-						//simu_aux.tiempo = simu_aux.sig_tiempo_salida.front();
-					}	
-	
-
-				}else{ // Si es el primer cliente del sistema...
-
-					cout << "Primer cliente en el sistema" << endl; //Prueba.
-					simu_aux.sig_evento = 'L'; //Siguiente evento: Llegada.
-					simu_aux.s_ocupados++; //Servidores ocupados: 1.
-				}
-
-				simu_aux.nclientes = simu_aux.nclientes + 1; //Aumenta la cantidad de clientes en el sistema.
-				
-				//cout << " Salio del evento llegada " << endl;//Prueba.
-
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
-			/* 												COMIENZA salida                                        */
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/				
-
-			}else{ // Si el evento es una salida.
-
-				simu_aux.tiempo = simu_aux.sig_salida;
-				cout << "En salida: simu_aux.tiempo:" << simu_aux.tiempo << endl;//Prueba.
-				simu_aux.nclientes = simu_aux.nclientes - 1;
-
-				if (simu_aux.nclientes >= 1){
+					if(cantidadClientes > 0){ //Cuando hay al menos 1 cliente.
+						
+						//Calculo del tiempo de servicio.
+						rServicio = numerosUniformes(numerosEnteros(mod_m),mod_m);
+						aleatorio = observacionAleatoria(rServicio,s.getB()); 
+						
+						if(servidoresOcupados == 0){											
+							valorR0 = aleatorio;
+							valorS0 = rServicio;												
+						}else{
+							if(servidoresOcupados == 1){																	
+								valorR1 = aleatorio;												
+								valorS1 = rServicio;
+							}else{
+								if(servidoresOcupados == 2){									
+									valorR2 = aleatorio;												
+									valorS2 = rServicio;
+								}else{
+									if(servidoresOcupados == 3){														
+										valorR3 = aleatorio;												
+										valorS3 = rServicio;
+									}else{
+										servidoresOcupados--;											
+										
+									} //Fin if SO = 3.
+								} //Fin if SO = 2
+							}	//Fin if SO = 1
+						} //Fin if SO = 0
+						servidoresOcupados++;
+						
+					if(banderaTSalida)	
+						sigTSalida = aleatorio + tiempo;
+						
 					
-					simu_aux.rservicio.push_front(numerosUniformes(numerosEnteros(mod_m),mod_m));
-					simu_aux.sig_tiempo_salida.push_front(observacionAleatoria(simu_aux.rservicio.front(),s.getB()));
+					tiemposLlegada.push_back(sigTiempo);
 					
-					simu_aux.rservicio.sort();
-					simu_aux.sig_tiempo_salida.sort();	//ordena los tiempos de salida
-					simu_aux.sig_salida = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo; // le asigna el tiempo mas cercano
-					simu_aux.s_ocupados--;
-
-					// define cual es el proximo evento
-					if (simu_aux.sig_llegada < simu_aux.sig_salida){
-						simu_aux.sig_evento = 'L';
-						simu_aux.tiempo = simu_aux.sig_tiempo_llegada;
+					if(tiemposLlegada.front() < sigTSalida){
+						sigEvento = 'L';
+						tiemposLlegada.remove(tiemposLlegada.back());
+						banderaTSalida = false;
 					}else{
-						simu_aux.sig_evento = 'S';
-						simu_aux.tiempo = simu_aux.sig_tiempo_salida.front() + simu_aux.tiempo;
-					}
-				}else{
-					cout << "el sistema se quedo sin clientes en la cola. break()" << endl; 
-					break;
-				} 
+						sigEvento = 'S';		
+						banderaTSalida = true;				
+					}				
+					}//Fin if cantidadClientes.
+					
+						
+					
+					cantidadClientes++;
+				//	cout << "Tiempo entre llegadas " << sigTLlegada << " tiempo tn" << tiempo << endl;
+					//cout << "aleatoriooo" <<  aleatorio << endl;
+					//cout << "siguiente salida" << sigTSalida << endl;	
+					//cout << "tiemposLlegada.front" << tiemposLlegada.front() << endl;
+					//	getchar();
+					
+				}else{ //Si es una salida.
+								
+					cantidadClientes--;			
+									
+					//Genero el nuevo tiempo.
+					tiempo = sigTSalida;
 				
-			}	
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
-			/* 												FIN DE LA ITERACION                                    */
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/			
-
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
-			/* 												IMPRESION DE RESULTADOS                                */
-			/* ////////////////////////////////////////////////////////////////////////////////////////////////////*/
-
-			
-			//cout << endl << endl << " llego al break " << endl;
-			//if (j==10) break;
-//fprintf(myfiletabla,"replica %d",i);
-			fprintf(myfiletabla, "| %.3f | %d  |%.3f |%.3f  ",simu_aux.tiempo,simu_aux.nclientes-1,simu_aux.rllegada,simu_aux.sig_tiempo_llegada );
-			
-			j=0;
-			for (it = simu_aux.rservicio.begin(); it != simu_aux.rservicio.end(); ++it) {
-    			fprintf(myfiletabla, "|%.3f ",*it);
-    			j++;
-    			//cout << "simu_aux.rservicio.front:" << *it << endl ;
-			}
-			while (j<4){
-				fprintf(myfiletabla,"| %c    ",'-');
-				j++;
-			}
-			
-		//	fprintf(myfiletabla,"%d",j);
-
-			j=0;	
-			for (it = simu_aux.sig_tiempo_salida.begin(); it != simu_aux.sig_tiempo_salida.end(); ++it) {
-    			fprintf(myfiletabla, "|%.3f ",*it);
-    			j++;
-    			//cout << "simu_aux.rservicio.front:" << *it << endl ;
-			}
-				while (j<4){
-					fprintf(myfiletabla, "| %c    ",'-');
-					j++;
+					//Genero la nueva salida.
+					rServicio = numerosUniformes(numerosEnteros(mod_m),mod_m);
+					aleatorio = observacionAleatoria(rServicio,s.getB()); 
+				
+					sigTSalida = tiempo + aleatorio;
+				
+				
+					servidoresOcupados--;
+					
+					
+					
+					//Proximo evento.
+					if(!tiemposLlegada.empty()){ //Si hay tiempos de llegada.
+						if(tiemposLlegada.front() < sigTSalida){
+							sigEvento = 'L';	
+							tiemposLlegada.remove(tiemposLlegada.back());
+							sigTiempo = tiempo;													
+						}else{
+							sigEvento = 'S';																
+						}
+					}else{
+						sigEvento = 'L';		
+						sigTiempo = tiempo;
+					}
+				} //Fin if sigEvento.
+				
+				
+				fprintf(simulationFile, "| %.3f | %d  |%.3f |%.3f  ",tiempo,cantidadClientes,rLlegada,sigTLlegada );
+				
+				if(valorS0 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorS0);
 				}
-
-			fprintf(myfiletabla, "| %.3f| %.3f|   %c   |\n",simu_aux.sig_llegada,simu_aux.sig_salida,simu_aux.sig_evento);
-
-			simu_tabla.push_back(simu_aux);
-		}// fin del while de la simulacion		
-	} // fin del for (replicas)
+				if(valorS1 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorS1);
+				}
+				if(valorS2 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorS2);
+				}
+				if(valorS3 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorS3);
+				}
+				
+				if(valorR0 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorR0);
+				}
+				if(valorR1 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorR1);
+				}
+				if(valorR2 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorR2);
+				}
+				if(valorR3 == 0){
+					fprintf(simulationFile, "|  -   ");
+				}else{
+					fprintf(simulationFile, "| %.3f",valorR3);
+				}
+				
+				fprintf(simulationFile,"| %.3f| %.3f|   %c   |\n",sigTiempo,sigTSalida,sigEvento);	
+				valorR1 = 0;			
+				valorR2 = 0;
+				valorR3 = 0;
+				valorR0 = 0;
+				valorS1 = 0;
+				valorS2 = 0;
+				valorS3 = 0;
+				valorS0 = 0;
+				
+			
+		}//Fin while.
+		
+		
+		
+		
+	}//Fin for replicas.
+	fclose(simulationFile);
 }// fin simulacion
+
